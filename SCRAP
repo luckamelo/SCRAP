@@ -9,24 +9,26 @@ HEADERS = {
 def scrape_site():
     try:
         response = requests.get(BASE_URL, headers=HEADERS, timeout=10)
-        response.raise_for_status()
+        response.raise_for_status()  # Levanta uma exceção se der erro 
     except requests.exceptions.RequestException as e:
         print(f"Erro ao acessar {BASE_URL}: {e}")
         return
     
-    soup = BeautifulSoup(response.text, 'html.parser')
-    
-    # Coleta links
+    soup = BeautifulSoup(response.text, 'html.parser')  # Faz o parsing do HTML
+
+    # Coleta de links 
     links = [(link.get_text(strip=True), link["href"].strip()) for link in soup.find_all("a", href=True) if link["href"].startswith("http")]
     for text, href in links:
         print(f'Link encontrado: {href} - Texto: {text}')
-        # Aqui, você pode chamar a função de inserção de dados no banco, se necessário.
-    
-    # Coleta parágrafos
+        # Chama a função de inserção de dados no banco, se necessário
+        insert_data(text, href)
+
+    # Coleta de parágrafos 
     paragraphs = [p.get_text(strip=True) for p in soup.find_all("p") if p.get_text(strip=True)]
     for content in paragraphs:
         print(f'Parágrafo: {content}')
-        # Aqui, você pode chamar a função de inserção de dados no banco, se necessário.
+        # Chama a função de inserção de dados no banco
+        insert_data("Parágrafo", content)
 
 if __name__ == "__main__":
     scrape_site()
