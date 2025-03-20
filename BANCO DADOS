@@ -1,0 +1,19 @@
+import psycopg2
+
+def insert_data(title, content):
+    try:
+        conn = psycopg2.connect(
+            dbname="aula_pi3",
+            user="postgres",
+            password="postgres",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        # inserção SQL 
+        cur.execute("INSERT INTO posts(title, content) VALUES (%s, %s)", (title, content))
+        conn.commit()  # Salva as alterações no banco
+        cur.close()  # Fecha o cursor
+        conn.close()  # Fecha a conexão
+    except psycopg2.Error as e:
+        print(f"Erro ao inserir dados no banco: {e}")
