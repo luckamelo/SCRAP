@@ -1,0 +1,48 @@
+import requests
+from bs4 import BeautifulSoup
+import psycopg2
+
+BASE_URL = "http://nahoradoocio.lowlevel.com.br/"
+HEADERS = {
+    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+}
+
+def insert_data(title, content):
+    try:
+        conn = psycopg2.connect(
+            dbname="aula_pi3",
+            user="postgres",
+            password="postgres",
+            host="localhost",
+            port="5432"
+        )
+        cur = conn.cursor()
+        cur.execute("INSERT INTO posts(title, content) VALUES (%s, %s)", (title, content))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except psycopg2.Error as e:
+        print(f"Erro ao inserir dados no banco: {e}")
+
+def scrape_site():
+    try:
+        response = requests.get(BASE_URL, headers=HEADERS, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Erro ao acessar {BASE_URL}: {e}")
+        return
+    
+    soup = BeautifulSoup(response.text, 'html.parser')
+    
+    links = [(link.get_text(strip=True), link["href"].strip()) for link in soup.find_all("a", href=True) if link["href"].startswith("http")]
+    for text, href in links:
+        print(f'Link encontrado: {href} - Texto: {text}')
+        insert_data(text, href)
+    
+    paragraphs = [p.get_text(strip=True) for p in soup.find_all("p") if p.get_text(strip=True)]
+    for content in paragraphs:
+        print(f'Parágrafo: {content}')
+        insert_data("Parágrafo", content)
+
+if __name__ == "__main__":
+    scrape_site()
